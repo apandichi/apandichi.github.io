@@ -52,7 +52,7 @@
           </h2>
         </div>
         <div class="astro-options">
-          <a id="tweet-button" href="https://twitter.com/intent/tweet?screen_name=alinpandichi&amp;text=Hey%2C%20I%20404'd%20on%20your%20website%20http://apandichi.github.io/404.html/" class="btn small" data-related="alinpandichi">Tweet to me about it</a>
+          <a id="tweet-button" href="#" class="btn small" data-related="alinpandichi">Tweet to me about it</a>
           <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
           <a id="safe-button" class="btn small" href="/#open">Return to base</a>
         </div>
@@ -69,4 +69,7 @@
   ga('require', 'linkid', 'linkid.js');
   ga('send', 'pageview');
 </script>
+    <script type="text/javascript">
+      $('#tweet-button').attr("href", "https://twitter.com/intent/tweet?screen_name=alinpandichi&amp;text=Hey%2C%20I%20404'd%20on%20your%20website%20" + window.location.href);
+    </script>
   </body>
