@@ -1,72 +1,166 @@
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>(Not only) Java software developer</title><description>(Not only) Java software developer</description><link>http://apandichi.github.io/</link><generator>Ghost 0.6</generator><lastBuildDate>Sat, 08 Aug 2015 17:34:23 GMT</lastBuildDate><atom:link href="http://apandichi.github.io/rss/index.rss rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>Welcome to Ghost</title><description><p>You're live! Nice. We've put together a little post to introduce you to the Ghost editor and get you started. You can manage your content by signing in to the admin area at <code>&amp;lt;your blog URL&amp;gt;/ghost/</code>. When you arrive, you can select this post from a list</p></description><link>http://apandichi.github.io/welcome-to-ghost/</link><guid isPermaLink="false">e7ca3adc-2062-459a-bb0d-0335cdee0e40</guid><category>Getting Started</category><dc:creator>Alin Pandichi</dc:creator><pubDate>Sat, 08 Aug 2015 15:10:23 GMT</pubDate><content:encoded><p>You're live! Nice. We've put together a little post to introduce you to the Ghost editor and get you started. You can manage your content by signing in to the admin area at <code>&amp;lt;your blog URL&amp;gt;/ghost/</code>. When you arrive, you can select this post from a list on the left and see a preview of it on the right. Click the little pencil icon at the top of the preview to edit this post and read the next section!</p>
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel><title><![CDATA[(Not only) Java software developer]]></title><description><![CDATA[(Not only) Java software developer]]></description><link>http://apandichi.github.io/</link><generator>Ghost 0.6</generator><lastBuildDate>Fri, 28 Aug 2015 12:33:10 GMT</lastBuildDate><atom:link href="http://apandichi.github.io/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Database migrations in Cordova]]></title><description><![CDATA[<p>Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a</p>]]></description><link>http://apandichi.github.io/database-migrations-in-cordova/</link><guid isPermaLink="false">6cbc6bff-1355-4788-95ff-7e5f9a9fd846</guid><category><![CDATA[cordova]]></category><category><![CDATA[database]]></category><category><![CDATA[migrations]]></category><dc:creator><![CDATA[Alin Pandichi]]></dc:creator><pubDate>Fri, 28 Aug 2015 08:42:03 GMT</pubDate><content:encoded><![CDATA[<p>Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a few non-negligible number of users. You expect you will release several other versions of this app in the near future. Some of these next versions might need to make changes to the database schema, too. So how should you manage these database migrations? Here is how I tackled this problem.</p>
 
-<h2 id="gettingstarted">Getting Started</h2>
+<p>In the Java ecosystem, there are tools and libraries that can help you automate this process: Flyway, MyBatis Migrations, Liquibase, etc. For Cordova, the only relevant things I found out there are a <a href="http://www.raymondcamden.com/2013/08/14/Updating-PhoneGap-Databases">blogpost</a> about migrating WebSQL databases (a dead standard, <em>remotely</em> relevant) and <a href="https://github.com/coresmart/persistencejs">persistencejs</a>, a mapper library which provides a plugin to support migrations and which can be used with Cordova. Seeing as I don't trust ORMs that much, I wanted to implement my own solution.</p>
 
-<p>Ghost uses something called Markdown for writing. Essentially, it's a shorthand way to manage your post formatting as you write!</p>
+<p>Before diving into code, note that in order to avoid nested callbacks (aka callback hell), I decided to use <a href="http://ngcordova.com/docs/plugins/sqlite/">ngCordova's sqlite plugin wrapper</a> which returns a promise for each API method, allowing me to neatly chain the SQL operations. This also means that we'll have to use AngularJS.</p>
 
-<p>Writing in Markdown is really easy. In the left hand panel of Ghost, you simply write as you normally would. Where appropriate, you can use <em>shortcuts</em> to <strong>style</strong> your content. For example, a list:</p>
+<h3 id="migrationprocessoverview">Migration process overview</h3>
 
-<ul>
-<li>Item number one</li>
-<li>Item number two
-<ul><li>A nested item</li></ul></li>
-<li>A final item</li>
-</ul>
+<p>Each new version of the app will introduce a set of changes to the database (creating new tables, adding new columns to existing tables, etc) as a collection of DDL statements associated with a version number.</p>
 
-<p>or with numbers!</p>
+<pre><code class="language-prettyprint javascript">  var version1 = {
+    versionNumber: 1,
+    queries: [
+      "CREATE TABLE IF NOT EXISTS person(id INTEGER PRIMARY KEY NOT NULL, firstname VARCHAR(100), lastname VARCHAR(100))",
+      "CREATE TABLE IF NOT EXISTS pet(id INTEGER PRIMARY KEY NOT NULL, name VARCHAR(100))"
+    ]
+  };
 
-<ol>
-<li>Remember to buy some milk  </li>
-<li>Drink the milk  </li>
-<li>Tweet that I remembered to buy the milk, and drank it</li>
-</ol>
-
-<h3 id="links">Links</h3>
-
-<p>Want to link to a source? No problem. If you paste in a URL, like <a href="http://ghost.org">http://ghost.org</a> - it'll automatically be linked up. But if you want to customise your anchor text, you can do that too! Here's a link to <a href="http://ghost.org">the Ghost website</a>. Neat.</p>
-
-<h3 id="whataboutimages">What about Images?</h3>
-
-<p>Images work too! Already know the URL of the image you want to include in your article? Simply paste it in like this to make it show up:</p>
-
-<p><img src="https://ghost.org/images/ghost.png" alt="The Ghost Logo"></p>
-
-<p>Not sure which image you want to use yet? That's ok too. Leave yourself a descriptive placeholder and keep writing. Come back later and drag and drop the image in to upload:</p>
-
-<h3 id="quoting">Quoting</h3>
-
-<p>Sometimes a link isn't enough, you want to quote someone on what they've said. Perhaps you've started using a new blogging platform and feel the sudden urge to share their slogan? A quote might be just the way to do it!</p>
-
-<blockquote>
-  <p>Ghost - Just a blogging platform</p>
-</blockquote>
-
-<h3 id="workingwithcode">Working with Code</h3>
-
-<p>Got a streak of geek? We've got you covered there, too. You can write inline <code>&amp;lt;code&amp;gt;</code> blocks really easily with back ticks. Want to show off something more comprehensive? 4 spaces of indentation gets you there.</p>
-
-<pre><code class="language-prettyprint css">    .awesome-thing {
-        display: block;
-        width: 100%;
-    }
+  var version2 = {
+    versionNumber: 2,
+    queries: [
+      "ALTER TABLE person ADD address VARCHAR(100)",
+      "ALTER TABLE pet ADD ownerId INTEGER"
+    ]
+  };
 </code></pre>
 
-<pre><code class="language-prettyprint java">     void printClassName(Object obj) {
-         System.out.println("The class of " + obj +
-                            " is " + obj.getClass().getName());
-     }
+<p>We will also need a migration history table which will keep a record of all the migration steps that were already applied to the database of the device. We'll wrap this in a function that will return a promise resolving to the version number 0 after executing successfully.</p>
+
+<pre><code class="language-prettyprint javascript">  var createVersionHistoryTable = function() {
+    var query = "CREATE TABLE IF NOT EXISTS version_history(versionNumber INTEGER PRIMARY KEY NOT NULL, migratedAt DATE)";
+    var promise = $cordovaSQLite.execute(db, query, [])
+    .then(function() {
+      var versionNumber = 0;
+      return versionNumber;
+    });
+    return promise;
+  };
 </code></pre>
 
-<h3 id="readyforabreak">Ready for a Break?</h3>
+<p>Before running the migration, the app will need to find out what schema version is currently installed on the device, so that it can skip the steps that have been already applied.</p>
 
-<p>Throw 3 or more dashes down on any new line and you've got yourself a fancy new divider. Aw yeah.</p>
+<pre><code class="language-prettyprint javascript">  var selectCurrentVersion = function() {
+    var query = "SELECT MAX(versionNumber) AS maxVersion FROM version_history";
+    var promise = $cordovaSQLite.execute(db, query)
+      .then(function(res) {
+        var maxVersion = res.rows.item(0).maxVersion;
+        return maxVersion;
+    });
+    return promise;
+  };
+</code></pre>
 
-<hr>
+<p>These two functions are the initial steps that need to be performed everytime a new app is installed. (Actually, running them every time the app starts seems to be a good enough compromise.) The easiest way to go about this would be:</p>
 
-<h3 id="advancedusage">Advanced Usage</h3>
+<pre><code class="language-prettyprint javascript">  createVersionHistoryTable().then(selectCurrentVersion)
+    .then(function(maxVersion) {
+      console.log("The current version is: " + maxVersion);
+    })
+</code></pre>
 
-<p>There's one fantastic secret about Markdown. If you want, you can write plain old HTML and it'll still work! Very flexible.</p>
+<p>But what if there were 10 initial steps to be performed, instead of two? Would I write 10 consecutive <code>then</code>s? I could, but I think there's a more elegant way to chain promises using <code>Array.reduce</code>. You'll later see how this benefits us. </p>
 
-<p><input type="text" placeholder="I'm an input field!"></p>
+<pre><code class="language-prettyprint javascript">  var initialSteps = [
+    createVersionHistoryTable,
+    selectCurrentVersion
+  ];
 
-<p>That should be enough to get you started. Have fun - and let us know what you think :)</p></content:encoded></item></channel></rss>
+  initialSteps.reduce(function(previous, current) {
+    return previous.then(current);
+  }, $q.when())
+  .then(function(maxVersion) {
+      console.log("The current version is: " + maxVersion);
+  })
+</code></pre>
+
+<p>The above snippet is equivalent to the one above it. If I had 10 initial steps, I would just add them to the array. <code>$q</code> is just Angular's implementation of promises/deferred objects. <code>$q.when()</code> stands for the initial value of the reduce operation. It's basically a <code>noop</code> for promises.</p>
+
+<p>In a similar way, we will need to be able to execute in chain an array of queries. Each version will have a different array of queries.</p>
+
+<pre><code class="language-prettyprint javascript">  var executeInChain = function(queries) {
+    var promise = queries.reduce(function(previous, query) {
+      return previous.then(function() {
+        return $cordovaSQLite.execute(db, query, [])
+      });
+    }, $q.when());
+    return promise;
+  };
+</code></pre>
+
+<p>After running a migration step, we need to store into the version history table the version number associated with the queries array that we just ran.</p>
+
+<pre><code class="language-prettyprint javascript">  var storeVersionInHistoryTable = function(versionNumber) {
+    var query = "INSERT INTO version_history (versionNumber, migratedAt) VALUES (?, ?)";
+    var promise = $cordovaSQLite.execute(db, query, [versionNumber, new Date()])
+      .then(function(res) {
+        console.log("Stored version in history table: " + versionNumber);
+        return versionNumber;
+      });
+    return promise;
+  };
+</code></pre>
+
+<p>For each version object, we need to check the current version number, execute the queries if the version was not applied yet, store the version number in the history table and return a promise that can be chained together with the rest of the other versions.</p>
+
+<pre><code class="language-prettyprint javascript">  var versions = [
+    version1,
+    version2
+  ];
+
+  var migrationSteps = versions.map(function(version) {
+    return function(currentVersion) {
+      if (currentVersion &gt;= version.versionNumber)
+        return $q.when(currentVersion);
+
+      var promise = executeInChain(version.queries).then(function() {
+        console.log("Version "+version.versionNumber+" migration executed");
+        return version.versionNumber;
+      })
+      .then(storeVersionInHistoryTable);
+
+      return promise;
+    };
+  });
+</code></pre>
+
+<p>An important thing to note here is that we pass the current version number from one promise to the next, to determine if a certain step needs to be applied or not.</p>
+
+<p>Let's put it all together, including the initial steps related to the history table:</p>
+
+<pre><code class="language-prettyprint javascript">  var steps = initialSteps.concat(migrationSteps);
+  steps.reduce(function(previous, current) {
+    return previous.then(current);
+  }, $q.when())
+  .then(function() {
+    console.log("All migrations executed");
+  })
+  .catch(function(error) {
+    console.error(JSON.stringify(error));
+  });
+</code></pre>
+
+<p>Now, when we'll need a new version, all that needs to be done is to declare it, and add it to the array. Everything else should work outside the box.</p>
+
+<pre><code class="language-prettyprint javascript">  var version3 = {
+    versionNumber: 3,
+    queries: [
+      // whatever
+    ]
+  };
+
+  var versions = [
+    version1,
+    version2,
+    version3 // new version, yay!
+  ];
+</code></pre>
+
+<h3 id="conclusions">Conclusions</h3>
+
+<p>You can see <a href="https://github.com/apandichi/demos/tree/master/db-migrations-cordova">a working example</a> in its entirety in my <em>demos</em> GitHub repo. Note that it uses the Ionic framework, although it's not a must. On the other hand, AngularJS <em>is</em> required because of the <code>ngCordova</code> dependency.</p>
+
+<p>With a little bit more work, I think this could be converted into a separate library. The end user of this library would only need to declare the <code>versions</code> array and run a <code>migrate()</code> API function when the device is ready. In the end, it would be similar to what <a href="https://github.com/coresmart/persistencejs">persistencejs</a> is offering in its migration plugin, without the ORM stuff.</p>
+
+<p>One downside of all this is that <strong>rollback is not supported</strong>. If one of the DDL statements defined in any migration step has a syntax error, the database might be left in a state that needs manual intervention. So be sure to double check the correctness of your queries!</p>]]></content:encoded></item></channel></rss>

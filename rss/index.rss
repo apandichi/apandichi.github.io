@@ -1,0 +1,165 @@
+﻿<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>(Not only) Java software developer</title><description>(Not only) Java software developer</description><link>http://apandichi.github.io/</link><generator>Ghost 0.6</generator><lastBuildDate>Fri, 28 Aug 2015 12:33:10 GMT</lastBuildDate><atom:link href="http://apandichi.github.io/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>Database migrations in Cordova</title><description>&lt;p&gt;Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a&lt;/p&gt;</description><link>http://apandichi.github.io/database-migrations-in-cordova/</link><guid isPermaLink="false">6cbc6bff-1355-4788-95ff-7e5f9a9fd846</guid><category>cordova</category><category>database</category><category>migrations</category><dc:creator>Alin Pandichi</dc:creator><pubDate>Fri, 28 Aug 2015 08:42:03 GMT</pubDate><content:encoded>&lt;p&gt;Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a few non-negligible number of users. You expect you will release several other versions of this app in the near future. Some of these next versions might need to make changes to the database schema, too. So how should you manage these database migrations? Here is how I tackled this problem.&lt;/p&gt;
+
+&lt;p&gt;In the Java ecosystem, there are tools and libraries that can help you automate this process: Flyway, MyBatis Migrations, Liquibase, etc. For Cordova, the only relevant things I found out there are a &lt;a href="http://www.raymondcamden.com/2013/08/14/Updating-PhoneGap-Databases"&gt;blogpost&lt;/a&gt; about migrating WebSQL databases (a dead standard, &lt;em&gt;remotely&lt;/em&gt; relevant) and &lt;a href="https://github.com/coresmart/persistencejs"&gt;persistencejs&lt;/a&gt;, a mapper library which provides a plugin to support migrations and which can be used with Cordova. Seeing as I don't trust ORMs that much, I wanted to implement my own solution.&lt;/p&gt;
+
+&lt;p&gt;Before diving into code, note that in order to avoid nested callbacks (aka callback hell), I decided to use &lt;a href="http://ngcordova.com/docs/plugins/sqlite/"&gt;ngCordova's sqlite plugin wrapper&lt;/a&gt; which returns a promise for each API method, allowing me to neatly chain the SQL operations. This also means that we'll have to use AngularJS.&lt;/p&gt;
+
+&lt;h3 id="migrationprocessoverview"&gt;Migration process overview&lt;/h3&gt;
+
+&lt;p&gt;Each new version of the app will introduce a set of changes to the database (creating new tables, adding new columns to existing tables, etc) as a collection of DDL statements associated with a version number.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var version1 = {
+    versionNumber: 1,
+    queries: [
+      "CREATE TABLE IF NOT EXISTS person(id INTEGER PRIMARY KEY NOT NULL, firstname VARCHAR(100), lastname VARCHAR(100))",
+      "CREATE TABLE IF NOT EXISTS pet(id INTEGER PRIMARY KEY NOT NULL, name VARCHAR(100))"
+    ]
+  };
+
+  var version2 = {
+    versionNumber: 2,
+    queries: [
+      "ALTER TABLE person ADD address VARCHAR(100)",
+      "ALTER TABLE pet ADD ownerId INTEGER"
+    ]
+  };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We will also need a migration history table which will keep a record of all the migration steps that were already applied to the database of the device. We'll wrap this in a function that will return a promise resolving to the version number 0 after executing successfully.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var createVersionHistoryTable = function() {
+    var query = "CREATE TABLE IF NOT EXISTS version_history(versionNumber INTEGER PRIMARY KEY NOT NULL, migratedAt DATE)";
+    var promise = $cordovaSQLite.execute(db, query, [])
+    .then(function() {
+      var versionNumber = 0;
+      return versionNumber;
+    });
+    return promise;
+  };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Before running the migration, the app will need to find out what schema version is currently installed on the device, so that it can skip the steps that have been already applied.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var selectCurrentVersion = function() {
+    var query = "SELECT MAX(versionNumber) AS maxVersion FROM version_history";
+    var promise = $cordovaSQLite.execute(db, query)
+      .then(function(res) {
+        var maxVersion = res.rows.item(0).maxVersion;
+        return maxVersion;
+    });
+    return promise;
+  };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;These two functions are the initial steps that need to be performed everytime a new app is installed. (Actually, running them every time the app starts seems to be a good enough compromise.) The easiest way to go about this would be:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  createVersionHistoryTable().then(selectCurrentVersion)
+    .then(function(maxVersion) {
+      console.log("The current version is: " + maxVersion);
+    })
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;But what if there were 10 initial steps to be performed, instead of two? Would I write 10 consecutive &lt;code&gt;then&lt;/code&gt;s? I could, but I think there's a more elegant way to chain promises using &lt;code&gt;Array.reduce&lt;/code&gt;. You'll later see how this benefits us. &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var initialSteps = [
+    createVersionHistoryTable,
+    selectCurrentVersion
+  ];
+
+  initialSteps.reduce(function(previous, current) {
+    return previous.then(current);
+  }, $q.when())
+  .then(function(maxVersion) {
+      console.log("The current version is: " + maxVersion);
+  })
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The above snippet is equivalent to the one above it. If I had 10 initial steps, I would just add them to the array. &lt;code&gt;$q&lt;/code&gt; is just Angular's implementation of promises/deferred objects. &lt;code&gt;$q.when()&lt;/code&gt; stands for the initial value of the reduce operation. It's basically a &lt;code&gt;noop&lt;/code&gt; for promises.&lt;/p&gt;
+
+&lt;p&gt;In a similar way, we will need to be able to execute in chain an array of queries. Each version will have a different array of queries.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var executeInChain = function(queries) {
+    var promise = queries.reduce(function(previous, query) {
+      return previous.then(function() {
+        return $cordovaSQLite.execute(db, query, [])
+      });
+    }, $q.when());
+    return promise;
+  };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;After running a migration step, we need to store into the version history table the version number associated with the queries array that we just ran.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var storeVersionInHistoryTable = function(versionNumber) {
+    var query = "INSERT INTO version_history (versionNumber, migratedAt) VALUES (?, ?)";
+    var promise = $cordovaSQLite.execute(db, query, [versionNumber, new Date()])
+      .then(function(res) {
+        console.log("Stored version in history table: " + versionNumber);
+        return versionNumber;
+      });
+    return promise;
+  };
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For each version object, we need to check the current version number, execute the queries if the version was not applied yet, store the version number in the history table and return a promise that can be chained together with the rest of the other versions.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var versions = [
+    version1,
+    version2
+  ];
+
+  var migrationSteps = versions.map(function(version) {
+    return function(currentVersion) {
+      if (currentVersion &amp;gt;= version.versionNumber)
+        return $q.when(currentVersion);
+
+      var promise = executeInChain(version.queries).then(function() {
+        console.log("Version "+version.versionNumber+" migration executed");
+        return version.versionNumber;
+      })
+      .then(storeVersionInHistoryTable);
+
+      return promise;
+    };
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;An important thing to note here is that we pass the current version number from one promise to the next, to determine if a certain step needs to be applied or not.&lt;/p&gt;
+
+&lt;p&gt;Let's put it all together, including the initial steps related to the history table:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var steps = initialSteps.concat(migrationSteps);
+  steps.reduce(function(previous, current) {
+    return previous.then(current);
+  }, $q.when())
+  .then(function() {
+    console.log("All migrations executed");
+  })
+  .catch(function(error) {
+    console.error(JSON.stringify(error));
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, when we'll need a new version, all that needs to be done is to declare it, and add it to the array. Everything else should work outside the box.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-prettyprint javascript"&gt;  var version3 = {
+    versionNumber: 3,
+    queries: [
+      // whatever
+    ]
+  };
+
+  var versions = [
+    version1,
+    version2,
+    version3 // new version, yay!
+  ];
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id="conclusions"&gt;Conclusions&lt;/h3&gt;
+
+&lt;p&gt;You can see &lt;a href="https://github.com/apandichi/demos/tree/master/db-migrations-cordova"&gt;a working example&lt;/a&gt; in its entirety in my &lt;em&gt;demos&lt;/em&gt; GitHub repo. Note that it uses the Ionic framework, although it's not a must. On the other hand, AngularJS &lt;em&gt;is&lt;/em&gt; required because of the &lt;code&gt;ngCordova&lt;/code&gt; dependency.&lt;/p&gt;
+
+&lt;p&gt;With a little bit more work, I think this could be converted into a separate library. The end user of this library would only need to declare the &lt;code&gt;versions&lt;/code&gt; array and run a &lt;code&gt;migrate()&lt;/code&gt; API function when the device is ready. In the end, it would be similar to what &lt;a href="https://github.com/coresmart/persistencejs"&gt;persistencejs&lt;/a&gt; is offering in its migration plugin, without the ORM stuff.&lt;/p&gt;
+
+&lt;p&gt;One downside of all this is that &lt;strong&gt;rollback is not supported&lt;/strong&gt;. If one of the DDL statements defined in any migration step has a syntax error, the database might be left in a state that needs manual intervention. So be sure to double check the correctness of your queries!&lt;/p&gt;</content:encoded></item></channel></rss>

@@ -1,0 +1,400 @@
+﻿
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Database migrations in Cordova - (Not only) Java software developer</title>
+
+  <meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+<link rel="apple-touch-icon" sizes="57x57" href="../assets/img/apple-touch-icon-57x57.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="60x60" href="../assets/img/apple-touch-icon-60x60.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="72x72" href="../assets/img/apple-touch-icon-72x72.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-touch-icon-76x76.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="114x114" href="../assets/img/apple-touch-icon-114x114.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="120x120" href="../assets/img/apple-touch-icon-120x120.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="144x144" href="../assets/img/apple-touch-icon-144x144.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="152x152" href="../assets/img/apple-touch-icon-152x152.png?v=wAAv6Wqe6l">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon-180x180.png?v=wAAv6Wqe6l">
+<link rel="icon" type="image/png" href="../assets/img/favicon-32x32.png?v=wAAv6Wqe6l" sizes="32x32">
+<link rel="icon" type="image/png" href="../assets/img/favicon-194x194.png?v=wAAv6Wqe6l" sizes="194x194">
+<link rel="icon" type="image/png" href="../assets/img/favicon-96x96.png?v=wAAv6Wqe6l" sizes="96x96">
+<link rel="icon" type="image/png" href="../assets/img/android-chrome-192x192.png?v=wAAv6Wqe6l" sizes="192x192">
+<link rel="icon" type="image/png" href="../assets/img/favicon-16x16.png?v=wAAv6Wqe6l" sizes="16x16">
+<link rel="manifest" href="../assets/img/manifest.json?v=wAAv6Wqe6l">
+<link rel="shortcut icon" href="../assets/img/favicon.ico?v=wAAv6Wqe6l">
+<meta name="msapplication-TileColor" content="#e74c3c">
+<meta name="msapplication-TileImage" content="/assets/img/mstile-144x144.png?v=wAAv6Wqe6l">
+<meta name="msapplication-config" content="/assets/img/browserconfig.xml?v=wAAv6Wqe6l">
+<meta name="theme-color" content="#e74c3c">
+
+  <link rel="stylesheet" type="text/css" href="../assets/css/uno.css?v=88dd2be3ba">
+
+  <link rel="canonical" href="index.html">
+    
+    <meta property="og:site_name" content="(Not only) Java software developer">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Database migrations in Cordova">
+    <meta property="og:description" content="Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version...">
+    <meta property="og:url" content="http://apandichi.github.io/database-migrations-in-cordova/">
+    <meta property="article:published_time" content="2015-08-28T08:42:03.762Z">
+    <meta property="article:modified_time" content="2015-08-28T11:32:49.866Z">
+    <meta property="article:tag" content="cordova">
+    <meta property="article:tag" content="database">
+    <meta property="article:tag" content="migrations">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Database migrations in Cordova">
+    <meta name="twitter:description" content="Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version...">
+    <meta name="twitter:url" content="http://apandichi.github.io/database-migrations-in-cordova/">
+    
+    <script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "publisher": "(Not only) Java software developer",
+    "author": {
+        "@type": "Person",
+        "name": "Alin Pandichi",
+        "image": "//www.gravatar.com/avatar/65bad1c5bba1746ca9be21442332b8ac?s=250&d=mm&r=x",
+        "url": "http://apandichi.github.io/author/alin",
+        "sameAs": null,
+        "description": null
+    },
+    "headline": "Database migrations in Cordova",
+    "url": "http://apandichi.github.io/database-migrations-in-cordova/",
+    "datePublished": "2015-08-28T08:42:03.762Z",
+    "dateModified": "2015-08-28T11:32:49.866Z",
+    "keywords": "cordova, database, migrations",
+    "description": "Let&#x27;s say you&#x27;re developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You&#x27;re planning to ship the first version..."
+}
+    </script>
+
+    <meta name="generator" content="Ghost 0.6">
+    <link rel="alternate" type="application/rss+xml" title="(Not only) Java software developer" href="../rss/index.html">
+
+</head>
+<body class="post-template tag-cordova tag-database tag-migrations">
+
+  <section id="menu-button" class="expanded">
+    <a><i class="icon icon-list"></i></a>
+  </section>
+
+  <aside class="cover">
+
+  <div class="cover container">
+    <div class="profile">
+      <a id="avatar-link" title="" href="../index.html#open">
+        <img src="../content/images/2015/08/headshot.jpeg" alt="(Not only) Java software developer avatar" class="profile avatar hvr-buzz-out">
+        <h1>Alin Pandichi</h1>
+        <h3 id="profile-resume">(Not only) Java software developer</h3>
+      </a>
+
+      <hr class="divider long">
+      <p>(Not only) Java software developer</p>
+      <hr class="divider short">
+      <div class="navigation">
+        <div class="profile contact">
+          <nav class="navigation left">
+  <ul class="links">
+    <li class="links item">
+      <a href="../index.html#open" class="link-item" title="" id="blog-button">Blog</a>
+      <a href="../about/" class="link-item" title="" id="tags-button">About me</a>
+    </li>
+  </ul>
+</nav>
+          
+<nav class="navigation right">
+  <ul class="social expanded">
+
+  <!-- Twitter -->
+  <li class="social item hvr-grow-rotate">
+    <a target="blank" href="http://twitter.com/alinpandichi" title="Alin Pandichi on Twitter">
+      <i class="icon icon-social-twitter"></i>
+      <span class="label">Twitter</span>
+    </a>
+  </li>
+
+  <!-- Github -->
+  <li class="social item hvr-grow-rotate">
+    <a target="blank" href="https://github.com/apandichi" title="Alin Pandichi on Github">
+      <i class="icon icon-social-github"></i>
+      <span class="label">Github</span>
+    </a>
+  </li>
+
+  <!-- Google Plus -->
+  <li class="social item hvr-grow-rotate">
+    <a target="blank" href="https://plus.google.com/+PandichiAlinIonut" title="Alin Pandichi on Google Plus">
+      <i class="icon icon-social-google-plus"></i>
+      <span class="label">Google Plus</span>
+    </a>
+  </li>
+
+  <!-- Google Plus -->
+  <li class="social item hvr-grow-rotate">
+    <a target="blank" href="http://stackoverflow.com/users/3177496/alin-pandichi" title="Alin Pandichi on Stack Overflow">
+      <i class="icon icon-social-stack-overflow"></i>
+      <span class="label">Stack Overflow</span>
+    </a>
+  </li>
+
+  <!-- RSS -->
+  <li class="social item hvr-grow-rotate">
+    <a href="../rss/index.rss" title="Subscribe to RSS">
+      <i class="icon icon-rss"></i>
+      <span class="label">RSS</span>
+    </a>
+  </li>
+
+  </ul>
+</nav>
+          <section class="icon icon-search" id="search-container">
+  <hr class="divider short">
+  <form id="search-form">
+    <input type="text" name="search" placeholder="git, css, javascript,..." id="search-field">
+  </form>
+</section>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+  <main>
+    <section id="search-results"></section>
+    <section class="content">
+      
+
+  <article class="post tag-cordova tag-database tag-migrations">
+    <header>
+      <div class="post meta">
+        <time datetime="28 Aug 2015">28 Aug 2015</time>
+        <span class="post tags">in <a href="../tag/cordova/">cordova</a> <a href="../tag/database/">database</a> <a href="../tag/migrations/">migrations</a></span>
+        <span class="post reading-time"> – <span></span> read.</span>
+      </div>
+
+      <a id="share_twitter" alt="Tweet 'Database migrations in Cordova'" target="_blank">
+        
+        <h1 class="icon-reverse icon-social-twitter-post" id="post-title">Database migrations in Cordova.</h1>
+      </a>
+    </header>
+
+    <div id="post-content" class="post tag-cordova tag-database tag-migrations">
+      <p>Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a few non-negligible number of users. You expect you will release several other versions of this app in the near future. Some of these next versions might need to make changes to the database schema, too. So how should you manage these database migrations? Here is how I tackled this problem.</p>
+
+<p>In the Java ecosystem, there are tools and libraries that can help you automate this process: Flyway, MyBatis Migrations, Liquibase, etc. For Cordova, the only relevant things I found out there are a <a href="http://www.raymondcamden.com/2013/08/14/Updating-PhoneGap-Databases">blogpost</a> about migrating WebSQL databases (a dead standard, <em>remotely</em> relevant) and <a href="https://github.com/coresmart/persistencejs">persistencejs</a>, a mapper library which provides a plugin to support migrations and which can be used with Cordova. Seeing as I don't trust ORMs that much, I wanted to implement my own solution.</p>
+
+<p>Before diving into code, note that in order to avoid nested callbacks (aka callback hell), I decided to use <a href="http://ngcordova.com/docs/plugins/sqlite/">ngCordova's sqlite plugin wrapper</a> which returns a promise for each API method, allowing me to neatly chain the SQL operations. This also means that we'll have to use AngularJS.</p>
+
+<h3 id="migrationprocessoverview">Migration process overview</h3>
+
+<p>Each new version of the app will introduce a set of changes to the database (creating new tables, adding new columns to existing tables, etc) as a collection of DDL statements associated with a version number.</p>
+
+<pre><code class="language-prettyprint javascript">  var version1 = {
+    versionNumber: 1,
+    queries: [
+      "CREATE TABLE IF NOT EXISTS person(id INTEGER PRIMARY KEY NOT NULL, firstname VARCHAR(100), lastname VARCHAR(100))",
+      "CREATE TABLE IF NOT EXISTS pet(id INTEGER PRIMARY KEY NOT NULL, name VARCHAR(100))"
+    ]
+  };
+
+  var version2 = {
+    versionNumber: 2,
+    queries: [
+      "ALTER TABLE person ADD address VARCHAR(100)",
+      "ALTER TABLE pet ADD ownerId INTEGER"
+    ]
+  };
+</code></pre>
+
+<p>We will also need a migration history table which will keep a record of all the migration steps that were already applied to the database of the device. We'll wrap this in a function that will return a promise resolving to the version number 0 after executing successfully.</p>
+
+<pre><code class="language-prettyprint javascript">  var createVersionHistoryTable = function() {
+    var query = "CREATE TABLE IF NOT EXISTS version_history(versionNumber INTEGER PRIMARY KEY NOT NULL, migratedAt DATE)";
+    var promise = $cordovaSQLite.execute(db, query, [])
+    .then(function() {
+      var versionNumber = 0;
+      return versionNumber;
+    });
+    return promise;
+  };
+</code></pre>
+
+<p>Before running the migration, the app will need to find out what schema version is currently installed on the device, so that it can skip the steps that have been already applied.</p>
+
+<pre><code class="language-prettyprint javascript">  var selectCurrentVersion = function() {
+    var query = "SELECT MAX(versionNumber) AS maxVersion FROM version_history";
+    var promise = $cordovaSQLite.execute(db, query)
+      .then(function(res) {
+        var maxVersion = res.rows.item(0).maxVersion;
+        return maxVersion;
+    });
+    return promise;
+  };
+</code></pre>
+
+<p>These two functions are the initial steps that need to be performed everytime a new app is installed. (Actually, running them every time the app starts seems to be a good enough compromise.) The easiest way to go about this would be:</p>
+
+<pre><code class="language-prettyprint javascript">  createVersionHistoryTable().then(selectCurrentVersion)
+    .then(function(maxVersion) {
+      console.log("The current version is: " + maxVersion);
+    })
+</code></pre>
+
+<p>But what if there were 10 initial steps to be performed, instead of two? Would I write 10 consecutive <code>then</code>s? I could, but I think there's a more elegant way to chain promises using <code>Array.reduce</code>. You'll later see how this benefits us. </p>
+
+<pre><code class="language-prettyprint javascript">  var initialSteps = [
+    createVersionHistoryTable,
+    selectCurrentVersion
+  ];
+
+  initialSteps.reduce(function(previous, current) {
+    return previous.then(current);
+  }, $q.when())
+  .then(function(maxVersion) {
+      console.log("The current version is: " + maxVersion);
+  })
+</code></pre>
+
+<p>The above snippet is equivalent to the one above it. If I had 10 initial steps, I would just add them to the array. <code>$q</code> is just Angular's implementation of promises/deferred objects. <code>$q.when()</code> stands for the initial value of the reduce operation. It's basically a <code>noop</code> for promises.</p>
+
+<p>In a similar way, we will need to be able to execute in chain an array of queries. Each version will have a different array of queries.</p>
+
+<pre><code class="language-prettyprint javascript">  var executeInChain = function(queries) {
+    var promise = queries.reduce(function(previous, query) {
+      return previous.then(function() {
+        return $cordovaSQLite.execute(db, query, [])
+      });
+    }, $q.when());
+    return promise;
+  };
+</code></pre>
+
+<p>After running a migration step, we need to store into the version history table the version number associated with the queries array that we just ran.</p>
+
+<pre><code class="language-prettyprint javascript">  var storeVersionInHistoryTable = function(versionNumber) {
+    var query = "INSERT INTO version_history (versionNumber, migratedAt) VALUES (?, ?)";
+    var promise = $cordovaSQLite.execute(db, query, [versionNumber, new Date()])
+      .then(function(res) {
+        console.log("Stored version in history table: " + versionNumber);
+        return versionNumber;
+      });
+    return promise;
+  };
+</code></pre>
+
+<p>For each version object, we need to check the current version number, execute the queries if the version was not applied yet, store the version number in the history table and return a promise that can be chained together with the rest of the other versions.</p>
+
+<pre><code class="language-prettyprint javascript">  var versions = [
+    version1,
+    version2
+  ];
+
+  var migrationSteps = versions.map(function(version) {
+    return function(currentVersion) {
+      if (currentVersion &gt;= version.versionNumber)
+        return $q.when(currentVersion);
+
+      var promise = executeInChain(version.queries).then(function() {
+        console.log("Version "+version.versionNumber+" migration executed");
+        return version.versionNumber;
+      })
+      .then(storeVersionInHistoryTable);
+
+      return promise;
+    };
+  });
+</code></pre>
+
+<p>An important thing to note here is that we pass the current version number from one promise to the next, to determine if a certain step needs to be applied or not.</p>
+
+<p>Let's put it all together, including the initial steps related to the history table:</p>
+
+<pre><code class="language-prettyprint javascript">  var steps = initialSteps.concat(migrationSteps);
+  steps.reduce(function(previous, current) {
+    return previous.then(current);
+  }, $q.when())
+  .then(function() {
+    console.log("All migrations executed");
+  })
+  .catch(function(error) {
+    console.error(JSON.stringify(error));
+  });
+</code></pre>
+
+<p>Now, when we'll need a new version, all that needs to be done is to declare it, and add it to the array. Everything else should work outside the box.</p>
+
+<pre><code class="language-prettyprint javascript">  var version3 = {
+    versionNumber: 3,
+    queries: [
+      // whatever
+    ]
+  };
+
+  var versions = [
+    version1,
+    version2,
+    version3 // new version, yay!
+  ];
+</code></pre>
+
+<h3 id="conclusions">Conclusions</h3>
+
+<p>You can see <a href="https://github.com/apandichi/demos/tree/master/db-migrations-cordova">a working example</a> in its entirety in my <em>demos</em> GitHub repo. Note that it uses the Ionic framework, although it's not a must. On the other hand, AngularJS <em>is</em> required because of the <code>ngCordova</code> dependency.</p>
+
+<p>With a little bit more work, I think this could be converted into a separate library. The end user of this library would only need to declare the <code>versions</code> array and run a <code>migrate()</code> API function when the device is ready. In the end, it would be similar to what <a href="https://github.com/coresmart/persistencejs">persistencejs</a> is offering in its migration plugin, without the ORM stuff.</p>
+
+<p>One downside of all this is that <strong>rollback is not supported</strong>. If one of the DDL statements defined in any migration step has a syntax error, the database might be left in a state that needs manual intervention. So be sure to double check the correctness of your queries!</p>
+    </div>
+
+    <div class="post related">
+
+    </div>
+
+    <footer class="post comments">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+  // required: replace example with your forum shortname
+  var disqus_shortname = 'apandichi';
+  /* * * DON'T EDIT BELOW THIS LINE * * */
+  (function() {
+  var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</footer>
+
+  </article>
+
+
+      <footer>
+  <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+  <span class="copyright">
+    © 2015. All rights reserved. Built with <a href="https://ghost.org/" target="_blank">Ghost</a> and <a href="https://github.com/Kikobeats/uno-zen" target="_blank">Uno Zen</a> theme.
+  </span>
+</footer>
+    </section>
+  </main>
+
+  <script src="../public/jquery.js?v=88dd2be3ba"></script>
+  <script type="text/javascript" src="../assets/js/uno.js?v=88dd2be3ba"></script>
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-34372837-2', 'auto');
+  ga('require', 'linkid', 'linkid.js');
+  ga('send', 'pageview');
+</script>
+</body>
