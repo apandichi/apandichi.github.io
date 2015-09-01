@@ -1,3 +1,3 @@
 ﻿User-agent: *
-Sitemap: http://apandichi.github.io/sitemap.xml
+Sitemap: http://apandichi.github.io/rss/index.rss
 Disallow: /ghost/
