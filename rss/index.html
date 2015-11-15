@@ -1,5 +1,140 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel><title><![CDATA[(Not only) Java software developer]]></title><description><![CDATA[(Not only) Java software developer]]></description><link>http://apandichi.github.io/</link><generator>Ghost 0.6</generator><lastBuildDate>Tue, 01 Sep 2015 04:53:53 GMT</lastBuildDate><atom:link href="http://apandichi.github.io/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Database migrations in Cordova]]></title><description><![CDATA[<p>Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a</p>]]></description><link>http://apandichi.github.io/database-migrations-in-cordova/</link><guid isPermaLink="false">6cbc6bff-1355-4788-95ff-7e5f9a9fd846</guid><category><![CDATA[cordova]]></category><category><![CDATA[database]]></category><category><![CDATA[migrations]]></category><dc:creator><![CDATA[Alin Pandichi]]></dc:creator><pubDate>Fri, 28 Aug 2015 08:42:03 GMT</pubDate><content:encoded><![CDATA[<p>Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a few non-negligible number of users. You expect you will release several other versions of this app in the near future. Some of these next versions might need to make changes to the database schema, too. So how should you manage these database migrations? Here is how I tackled this problem.</p>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel><title><![CDATA[(Not only) Java software developer]]></title><description><![CDATA[(Not only) Java software developer]]></description><link>http://apandichi.github.io/</link><generator>Ghost 0.6</generator><lastBuildDate>Sun, 15 Nov 2015 11:01:34 GMT</lastBuildDate><atom:link href="http://apandichi.github.io/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Testing Cordova SQLite queries with Web SQL]]></title><description><![CDATA[<p>Once you start writing SQL queries for your Cordova application, you need to start thinking about how to make sure they work as expected. You'd want to test them in an automated fashion, but you're not ready to invest into a physical mobile device testing rig and you're not fond</p>]]></description><link>http://apandichi.github.io/testing-cordova-sqlite-queries-with-websql/</link><guid isPermaLink="false">a542ebe0-f488-47a2-ac91-edbacdcc22bc</guid><dc:creator><![CDATA[Alin Pandichi]]></dc:creator><pubDate>Sun, 15 Nov 2015 10:53:43 GMT</pubDate><content:encoded><![CDATA[<p>Once you start writing SQL queries for your Cordova application, you need to start thinking about how to make sure they work as expected. You'd want to test them in an automated fashion, but you're not ready to invest into a physical mobile device testing rig and you're not fond of emulators either. You want a fast feedback loop, something like running Jasmine tests in a browser. Luckily for you, the Cordova-sqlite-storage plugin emulates the Web SQL API as closely as possible. Let's see how you can leverage that in order to build a few Jasmine tests that validate your SQL queries.</p>
+
+<h3 id="thequeriesweneedtotest">The queries we need to test</h3>
+
+<p>My Cordova application is using Ionic (and implicitly AngularJS) and it implements two SQL queries: <code>insertPerson</code>  and <code>selectPerson</code>. They can be executed through an AngularJS service named <code>DatabaseService</code>.</p>
+
+<pre><code class="language-prettyprint javascript">    angular.module('starter', ['ionic', 'ngCordova'])
+        .service('DatabaseService', function($ionicPlatform, $cordovaSQLite, LoggingService, $q) {
+            var db;
+            window.document.addEventListener('deviceready', function() {
+                db = $cordovaSQLite.openDB({
+                    name: "mydb",
+                    bgType: 1
+                });
+            }, false);
+
+            this.insertPerson = function(firstname, lastname, address) {
+                var query = "INSERT INTO person (firstname, lastname, address) VALUES (?, ?, ?)";
+                var args = [firstname, lastname, address]
+                var promise = $cordovaSQLite.execute(db, query, args)
+                    .then(function(result) {
+                        return result.insertId;
+                    });
+                return promise;
+            };
+
+            this.selectPerson = function(id) {
+                var query = "SELECT * FROM person WHERE id = ?";
+                var promise = $cordovaSQLite.execute(db, query, [id])
+                    .then(function(result) {
+                        var person = result.rows.item(0);
+                        return person;
+                    });
+                return promise;
+            };
+
+            return this;
+        });
+</code></pre>
+
+<h3 id="replacingsqlitepluginwithwebsql">Replacing sqlitePlugin with Web SQL</h3>
+
+<p>The key to the whole thing is to replace the <code>window.sqlitePlugin</code> object with one whose <code>openDatabase</code> function returns the equivalent of Web SQL.</p>
+
+<pre><code class="language-prettyprint javascript">window.sqlitePlugin = {};  
+window.sqlitePlugin.openDatabase = function() {  
+  return window.openDatabase('mydb', '1.0', 'myDatabase', 10000000);
+};
+</code></pre>
+
+<h3 id="creatingthedatabaseschema">Creating the database schema</h3>
+
+<p>We will need a function that takes in an array of DDL queries to be executed in order to create the database schema.</p>
+
+<pre><code class="language-prettyprint javascript">var processQueries = function(db, queries, dbname) {  
+  db.transaction(function(tx) {
+    for (var idx = 0; idx &lt; queries.length; idx++) {
+      tx.executeSql(queries[idx], [], 
+        function() {
+          console.log('done');
+        },
+        function(tx, err) {
+          console.log('error: ' + err.message);
+        }
+      );
+    }
+  });
+};
+</code></pre>
+
+<p>We can fetch and process these DDL queries from an online storage.</p>
+
+<pre><code class="language-prettyprint javascript">$.ajax({
+  url: 'https://cdn.rawgit.com/apandichi/demos/eaf2109abc17f90f6cad8340e0b491eca90aa766/db-migrations-cordova/www/spec/db-schema.sql',
+  type: 'get',
+  async: false,
+  success: function(response) {
+    var db = openDatabase('mydb', '1.0', 'myDatabase', 10000000);
+    var queries = response.split(';\n');
+    processQueries(db, queries, 'myDatabase');
+  },
+  error: function(response) {
+    console.log("error!", JSON.stringify(response));
+  }
+});
+</code></pre>
+
+<h3 id="jasminesetup">Jasmine setup</h3>
+
+<p>The replacement of <code>sqlitePlugin</code> and the creation of the database schema needs to happen just once before running all the Jasmine tests in your suite. This means that you'll have to wrap those code snippets above into a Jasmine <code>beforeAll</code> function. As of version 2.1 of Jasmine, this function is available out of the box. If you're using an earlier version, you can add <a href="https://github.com/nonplus/jasmine-beforeAll">jasmine-beforeAll</a> to your test dependencies, which will enable the needed hook.</p>
+
+<p>Also, in my case, I need to inject the <code>DatabaseService</code> into the test, to manually trigger the <code>deviceready</code> event, and to provide an implementation (<a href="https://github.com/kriskowal/q">the Q library</a>) to the AngularJS <code>$q</code> promise service.</p>
+
+<pre><code class="language-prettyprint javascript">    var DatabaseService;
+
+    beforeEach(function() {        
+      angular.mock.module("starter");
+      angular.mock.module(function ($provide) {
+        $provide.value('$q', Q);
+      });
+
+      inject(function(_DatabaseService_) {
+        DatabaseService = _DatabaseService_;
+        helper.trigger(window.document, 'deviceready');
+      });
+    });
+</code></pre>
+
+<h3 id="theactualjasminetest">The actual Jasmine test</h3>
+
+<p>The following test will insert a person into the database, retrieve the person record based on the inserted id, and it will make assertions on the retrieved result.</p>
+
+<pre><code class="language-prettyprint javascript">    it("should save person into the database", function() {
+      runs(function() {
+        var promise = DatabaseService.insertPerson("Jon", "Arbuckle", "Somewhere in the US")
+          .then(function (insertId) {
+            return DatabaseService.selectPerson(insertId)
+          });
+        return promise;
+      }, function(result) {
+        expect(result.firstname).toBe("Jon");
+        expect(result.lastname).toBe("Arbuckle");
+        expect(result.address).toBe("Somewhere in the US");
+      });
+</code></pre>
+
+<h3 id="seethefullexample">See the full example</h3>
+
+<p>You can check out the full code example on Github: <a href="https://github.com/apandichi/demos/tree/master/db-migrations-cordova">db-migrations-cordova</a>. It builds upon the previous article about database migrations in Cordova. <br>
+The most relevant files for this blogpost are:</p>
+
+<ul>
+<li>www/js/app.js - the AngularJS application</li>
+<li>www/spec/index.js - the Jamine test file</li>
+<li>www/spec.html - an HTML test runner. Load this in a browser that supports Web SQL, such as Google Chrome. You should be able to see the passing test, and to inspect the Web SQL tables with Chrome's Dev Tools.</li>
+</ul>]]></content:encoded></item><item><title><![CDATA[Database migrations in Cordova]]></title><description><![CDATA[<p>Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a</p>]]></description><link>http://apandichi.github.io/database-migrations-in-cordova/</link><guid isPermaLink="false">6cbc6bff-1355-4788-95ff-7e5f9a9fd846</guid><category><![CDATA[cordova]]></category><category><![CDATA[database]]></category><category><![CDATA[migrations]]></category><dc:creator><![CDATA[Alin Pandichi]]></dc:creator><pubDate>Fri, 28 Aug 2015 08:42:03 GMT</pubDate><content:encoded><![CDATA[<p>Let's say you're developing a mobile application using Apache Cordova. Your app has a local Sqlite3 database on the device and you use the Cordova-sqlite-storage plugin to fetch and store data into it. You're planning to ship the first version and it is going to be used by quite a few non-negligible number of users. You expect you will release several other versions of this app in the near future. Some of these next versions might need to make changes to the database schema, too. So how should you manage these database migrations? Here is how I tackled this problem.</p>
 
 <p>In the Java ecosystem, there are tools and libraries that can help you automate this process: Flyway, MyBatis Migrations, Liquibase, etc. For Cordova, the only relevant things I found out there are a <a href="http://www.raymondcamden.com/2013/08/14/Updating-PhoneGap-Databases">blogpost</a> about migrating WebSQL databases (a dead standard, <em>remotely</em> relevant) and <a href="https://github.com/coresmart/persistencejs">persistencejs</a>, a mapper library which provides a plugin to support migrations and which can be used with Cordova. Seeing as I don't trust ORMs that much, I wanted to implement my own solution.</p>
 
